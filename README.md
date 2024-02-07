@@ -1,5 +1,5 @@
-Name: Rishit
-Roll Number: 2022405
+### Name: Rishit
+### Roll Number: 2022405
 
 This is my DBMS course project which is inspired by the online retail store "BlinkIt"
 This is also a retail store where you can enter either as a customer or the admin.
