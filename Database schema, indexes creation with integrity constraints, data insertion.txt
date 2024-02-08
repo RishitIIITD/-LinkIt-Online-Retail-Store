@@ -1,0 +1,43 @@
+# First, create the database
+CREATE DATABASE store;
+
+# Now, creating the tables
+
+# Make table "customers"
+CREATE TABLE `store`.`customers` (
+  `customer_id` INT NOT NULL AUTO_INCREMENT,
+  `first_name` VARCHAR(45) NOT NULL,
+  `last_name` VARCHAR(45) NULL DEFAULT NULL,
+  `phone` VARCHAR(45) NOT NULL,
+  `birth_date` DATE NOT NULL,
+  `address` VARCHAR(45) NOT NULL,
+  `city` VARCHAR(45) NOT NULL,
+  `state` CHAR(2) NOT NULL,
+  `points` INT NULL DEFAULT 0,
+  PRIMARY KEY (`customer_id`, `phone`)
+);
+
+# Make table "products"
+CREATE TABLE `store`.`products` (
+  `product_id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(45) NOT NULL,
+  `quantity_in_stock` INT NOT NULL,
+  `unit_price` DECIMAL NOT NULL,
+  `rating` DECIMAL(2,1) NULL DEFAULT 0,
+  PRIMARY KEY (`product_id`));
+
+# Make table "vendors"
+CREATE TABLE `store`.`vendors` (
+  `vendor_id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(45) NOT NULL,
+  `phone` VARCHAR(45) NOT NULL,
+  `address` VARCHAR(45) NOT NULL,
+  `city` VARCHAR(45) NOT NULL,
+  `state` CHAR(2) NOT NULL,
+  PRIMARY KEY (`vendor_id`, `phone`));
+
+# Make table "shippers"
+CREATE TABLE `store`.`shippers` (
+  `shipper_id` INT NOT NULL AUTO_INCREMENT,
+  `shipper_name` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`shipper_id`));
