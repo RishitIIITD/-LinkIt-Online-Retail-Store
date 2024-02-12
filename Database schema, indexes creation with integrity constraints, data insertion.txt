@@ -1,7 +1,13 @@
 # First, create the database
 CREATE DATABASE store;
 
-# Now, creating the tables
+# Now, create the tables
+
+# Make table "admins"
+CREATE TABLE `store`.`admins` (
+  `admin_id` INT NOT NULL AUTO_INCREMENT,
+  `password` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`admin_id`));
 
 # Make table "customers"
 CREATE TABLE `store`.`customers` (
@@ -19,12 +25,20 @@ CREATE TABLE `store`.`customers` (
 
 # Make table "products"
 CREATE TABLE `store`.`products` (
-  `product_id` INT NOT NULL AUTO_INCREMENT,
+  `product_id` INT NOT NULL,
   `name` VARCHAR(45) NOT NULL,
   `quantity_in_stock` INT NOT NULL,
   `unit_price` DECIMAL NOT NULL,
-  `rating` DECIMAL(2,1) NULL DEFAULT 0,
-  PRIMARY KEY (`product_id`));
+  `rating` DECIMAL(2,1) NULL DEFAULT 0.0,
+  `date_added` DATE NOT NULL,
+  `vendor_id` INT NOT NULL,
+  PRIMARY KEY (`product_id`),
+  INDEX `vendor_id_idx` (`vendor_id` ASC) VISIBLE,
+  CONSTRAINT `vendor_id`
+    FOREIGN KEY (`vendor_id`)
+    REFERENCES `store`.`vendors` (`vendor_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
 
 # Make table "vendors"
 CREATE TABLE `store`.`vendors` (
@@ -41,3 +55,93 @@ CREATE TABLE `store`.`shippers` (
   `shipper_id` INT NOT NULL AUTO_INCREMENT,
   `shipper_name` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`shipper_id`));
+
+# Make table "carts"
+CREATE TABLE `store`.`carts` (
+  `customer_id` INT NOT NULL,
+  `product_id` INT NOT NULL,
+  `product_name` VARCHAR(45) NOT NULL,
+  `quantity` INT NULL DEFAULT 1,
+  `unit_price` DECIMAL NOT NULL,
+  `total_price_per_product` DECIMAL GENERATED ALWAYS AS (quantity*unit_price) VIRTUAL,
+  PRIMARY KEY (`customer_id`, `product_id`),
+  INDEX `product_id_idx` (`product_id` ASC) VISIBLE,
+  CONSTRAINT `customer_id`
+    FOREIGN KEY (`customer_id`)
+    REFERENCES `store`.`customers` (`customer_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `product_id`
+    FOREIGN KEY (`product_id`)
+    REFERENCES `store`.`products` (`product_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+# Make table "orders"
+CREATE TABLE `store`.`orders` (
+  `order_id` INT NOT NULL,
+  `customer_id` INT NOT NULL,
+  `order_date` DATE NOT NULL,
+  `status` VARCHAR(45) NOT NULL,
+  `shipped_date` DATE NULL DEFAULT NULL,
+  `shipper_id` INT NOT NULL,
+  `amount` DECIMAL NOT NULL,
+  `payment_method` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`order_id`),
+  INDEX `customer_idx_idx` (`customer_id` ASC) VISIBLE,
+  INDEX `shipper_idx_idx` (`shipper_id` ASC) VISIBLE,
+  CONSTRAINT `customer_idx`
+    FOREIGN KEY (`customer_id`)
+    REFERENCES `store`.`customers` (`customer_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `shipper_idx`
+    FOREIGN KEY (`shipper_id`)
+    REFERENCES `store`.`shippers` (`shipper_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+# Make table "order_items"
+CREATE TABLE `store`.`order_items` (
+  `order_id` INT NOT NULL,
+  `product_id` INT NOT NULL,
+  `quantity` INT NOT NULL,
+  `total_price_per_product` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`order_id`, `product_id`),
+  INDEX `product_idx_idx` (`product_id` ASC) VISIBLE,
+  CONSTRAINT `order_idx`
+    FOREIGN KEY (`order_id`)
+    REFERENCES `store`.`orders` (`order_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `product_idx`
+    FOREIGN KEY (`product_id`)
+    REFERENCES `store`.`products` (`product_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+# Make table "reviews"
+CREATE TABLE `store`.`reviews` (
+  `review_id` INT NOT NULL,
+  `customer_id` INT NOT NULL,
+  `product_id` INT NOT NULL,
+  `comments` VARCHAR(100) NULL DEFAULT NULL,
+  `date_added` DATE NOT NULL,
+  `rating` DECIMAL(2,1) NOT NULL,
+  PRIMARY KEY (`review_id`, `customer_id`, `product_id`),
+  INDEX `customer_idx_idx` (`customer_id` ASC) VISIBLE,
+  INDEX `product_idx_idx` (`product_id` ASC) VISIBLE,
+  CONSTRAINT `fk_customer_id`
+    FOREIGN KEY (`customer_id`)
+    REFERENCES `store`.`customers` (`customer_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product_id`
+    FOREIGN KEY (`product_id`)
+    REFERENCES `store`.`products` (`product_id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+
+# Now, insert some fictitious data
+
+# Insert data in "admins" table
