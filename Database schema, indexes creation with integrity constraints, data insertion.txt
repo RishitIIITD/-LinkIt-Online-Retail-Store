@@ -25,12 +25,12 @@ CREATE TABLE `store`.`customers` (
 
 # Make table "products"
 CREATE TABLE `store`.`products` (
-  `product_id` INT NOT NULL,
+  `product_id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(45) NOT NULL,
   `quantity_in_stock` INT NOT NULL,
-  `unit_price` DECIMAL NOT NULL,
+  `unit_price` DECIMAL(10,2) NOT NULL,
   `rating` DECIMAL(2,1) NULL DEFAULT 0.0,
-  `date_added` DATE NOT NULL,
+  `date_added` DATE NULL DEFAULT (CURDATE()),
   `vendor_id` INT NOT NULL,
   PRIMARY KEY (`product_id`),
   INDEX `vendor_id_idx` (`vendor_id` ASC) VISIBLE,
@@ -60,10 +60,10 @@ CREATE TABLE `store`.`shippers` (
 CREATE TABLE `store`.`carts` (
   `customer_id` INT NOT NULL,
   `product_id` INT NOT NULL,
-  `product_name` VARCHAR(45) NOT NULL,
+  `product_name` VARCHAR(45) GENERATED ALWAYS AS (SELECT p.name FROM products p JOIN carts c WHERE p.product_id=c.product_id;) VIRTUAL ;
   `quantity` INT NULL DEFAULT 1,
-  `unit_price` DECIMAL NOT NULL,
-  `total_price_per_product` DECIMAL GENERATED ALWAYS AS (quantity*unit_price) VIRTUAL,
+  `unit_price` DECIMAL(10,2) NOT NULL,
+  `total_price_per_product` DECIMAL(10,2) GENERATED ALWAYS AS (quantity*unit_price) VIRTUAL,
   PRIMARY KEY (`customer_id`, `product_id`),
   INDEX `product_id_idx` (`product_id` ASC) VISIBLE,
   CONSTRAINT `customer_id`
@@ -79,13 +79,13 @@ CREATE TABLE `store`.`carts` (
 
 # Make table "orders"
 CREATE TABLE `store`.`orders` (
-  `order_id` INT NOT NULL,
+  `order_id` INT NOT NULL AUTO_INCREMENT,
   `customer_id` INT NOT NULL,
-  `order_date` DATE NOT NULL,
-  `status` VARCHAR(45) NOT NULL,
+  `order_date` DATE NULL DEFAULT (CURDATE()),
+  `status` VARCHAR(45) NULL DEFAULT "Processed",
   `shipped_date` DATE NULL DEFAULT NULL,
   `shipper_id` INT NOT NULL,
-  `amount` DECIMAL NOT NULL,
+  `amount` DECIMAL(10,2) NOT NULL,
   `payment_method` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`order_id`),
   INDEX `customer_idx_idx` (`customer_id` ASC) VISIBLE,
@@ -100,13 +100,21 @@ CREATE TABLE `store`.`orders` (
     REFERENCES `store`.`shippers` (`shipper_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
+DELIMITER $$
+CREATE TRIGGER `orders_AFTER_INSERT` AFTER INSERT ON `orders` FOR EACH ROW
+BEGIN
+	UPDATE `store`.`customers`
+    SET points = points + 100
+    WHERE customer_id = NEW.customer_id;
+END$$
+DELIMITER ;
 
 # Make table "order_items"
 CREATE TABLE `store`.`order_items` (
   `order_id` INT NOT NULL,
   `product_id` INT NOT NULL,
   `quantity` INT NOT NULL,
-  `total_price_per_product` VARCHAR(45) NOT NULL,
+  `total_price_per_product` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`order_id`, `product_id`),
   INDEX `product_idx_idx` (`product_id` ASC) VISIBLE,
   CONSTRAINT `order_idx`
@@ -122,11 +130,11 @@ CREATE TABLE `store`.`order_items` (
 
 # Make table "reviews"
 CREATE TABLE `store`.`reviews` (
-  `review_id` INT NOT NULL,
+  `review_id` INT NOT NULL AUTO_INCREMENT,
   `customer_id` INT NOT NULL,
   `product_id` INT NOT NULL,
   `comments` VARCHAR(100) NULL DEFAULT NULL,
-  `date_added` DATE NOT NULL,
+  `date_added` DATE NULL DEFAULT (CURDATE()),
   `rating` DECIMAL(2,1) NOT NULL,
   PRIMARY KEY (`review_id`, `customer_id`, `product_id`),
   INDEX `customer_idx_idx` (`customer_id` ASC) VISIBLE,
@@ -141,7 +149,190 @@ CREATE TABLE `store`.`reviews` (
     REFERENCES `store`.`products` (`product_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION);
+DELIMITER $$
+CREATE TRIGGER `reviews_AFTER_INSERT` AFTER INSERT ON `reviews` FOR EACH ROW
+BEGIN
+	UPDATE products
+    SET rating=(rating+new.rating)/2
+    WHERE product_id=new.product_id;
+END$$
+DELIMITER ;
 
 # Now, insert some fictitious data
 
 # Insert data in "admins" table
+INSERT INTO admins (password)
+VALUES ("123"), ("abc"), ("qwerty"), ("2024");
+
+# Insert data in "customers" table
+INSERT INTO customers (
+	first_name,
+    last_name,
+    phone,
+    birth_date,
+    address,
+    city,
+    state
+)
+VALUES
+("John", "Smith", "1234567890", "1990-01-01", "Boulevard Street", "New York", "NY"),
+("Steve", "Rogers", "0123456789", "1918-07-04", "President Street", "Los Angeles", "CA"),
+("Tony", "Stark", "9876543210", "1970-05-29", "Stark Tower", "Washington City", "WA"),
+("Shakti", "Man", "0987654321", "1997-09-13", "Borivali", "Mumbai", "MH")
+
+# Insert data in "vendors" table
+INSERT INTO vendors (
+	name,
+    phone,
+    address,
+    city,
+    state
+)
+VALUES
+("Ikea", "9876543210", "Kungers Kurva", "Stockholm", "SH"),
+("Dove", "0123456789", "Sector-32", "Noida", "UP"),
+("Nestle", "0987654321", "DLF Mall", "Gurugram", "HR"),
+("Levi's", "1234567890", "Sarojini Nagar", "New Delhi", "DL")
+
+# Insert data in "shippers" table
+INSERT INTO shippers (name)
+VALUES
+("FedEx"),
+("Blue Dart"),
+("DTDC"),
+("DHL")
+
+# Insert data in "products" table
+INSERT INTO products(
+	name,
+    quantity_in_stock,
+    unit_price,
+    date_added,
+    vendor_id)
+VALUES
+("Soap", 30, 10, CURDATE(), 2),
+("Shoes", 25, 26.78, CURDATE(), 4),
+("Wooden table", 5, 150.36, CURDATE(), 1),
+("Maggi", 50, 12.25, CURDATE(), 3)
+
+# Insert data in "carts" table one-by-one to ensure atomicity
+# Adding 1st product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(1, 5, (SELECT p.name FROM products p WHERE p.product_id=5), 4, (SELECT p.unit_price FROM products p WHERE p.product_id=5));
+
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-4
+WHERE product_id=5;
+
+# Adding 2nd product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(2, 6, (SELECT p.name FROM products p WHERE p.product_id=6), 2, (SELECT p.unit_price FROM products p WHERE p.product_id=6));
+
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-2
+WHERE product_id=6;
+
+# Adding 3rd product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(3, 7, (SELECT p.name FROM products p WHERE p.product_id=7), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=7));
+
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-1
+WHERE product_id=7;
+
+# Adding 4th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(4, 8, (SELECT p.name FROM products p WHERE p.product_id=8), 5, (SELECT p.unit_price FROM products p WHERE p.product_id=8));
+
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-5
+WHERE product_id=8;
+
+# Insert data in "orders" table one-by-one to ensure atomicity
+# Adding 1st order
+INSERT INTO orders (
+	customer_id,
+    order_date,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(1, CURDATE(), 1, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=1), "Card");
+
+# Adding 2nd order
+INSERT INTO orders (
+	customer_id,
+    order_date,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(2, CURDATE(), 2, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=2), "Cash");
+
+# Adding 3rd order
+INSERT INTO orders (
+	customer_id,
+    order_date,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(3, CURDATE(), 3, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=3), "UPI");
+
+# Adding 4th order
+INSERT INTO orders (
+	customer_id,
+    order_date,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(4, CURDATE(), 4, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=4), "UPI");
+
+# Insert data in "order_items" table
+INSERT INTO order_items (order_id, product_id, quantity, total_price_per_product)
+SELECT o.order_id, c.product_id, c.quantity, c.total_price_per_product
+FROM orders o
+JOIN carts c
+WHERE o.customer_id=c.customer_id;
+
+# Insert data in "reviews" table to ensure atomicity
+# Adding 1st review
+INSERT INTO reviews (customer_id, product_id, comments, rating)
+VALUES (1, 5, "Absolutely brilliant", 4.6);
+
+# Adding 2nd review
+INSERT INTO reviews (customer_id, product_id, comments, rating)
+VALUES (2, 6, NULL, 3.0);
+
+# Adding 3rd review
+INSERT INTO reviews (customer_id, product_id, comments, rating)
+VALUES (3, 4, "Not that great", 3.8);
+
+# Adding 4th review
+INSERT INTO reviews (customer_id, product_id, comments, rating)
+VALUES (4, 8, "Phenomenal", 5.0);
