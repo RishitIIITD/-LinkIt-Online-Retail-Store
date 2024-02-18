@@ -162,7 +162,7 @@ DELIMITER ;
 
 # Insert data in "admins" table
 INSERT INTO admins (password)
-VALUES ("123"), ("abc"), ("qwerty"), ("2024");
+VALUES ("123"), ("abc"), ("qwerty"), ("2024"), ("admin"), ("admin123"), ("password123"), ("password"), ("Pass"), ("word");
 
 # Insert data in "customers" table
 INSERT INTO customers (
@@ -178,7 +178,13 @@ VALUES
 ("John", "Smith", "1234567890", "1990-01-01", "Boulevard Street", "New York", "NY"),
 ("Steve", "Rogers", "0123456789", "1918-07-04", "President Street", "Los Angeles", "CA"),
 ("Tony", "Stark", "9876543210", "1970-05-29", "Stark Tower", "Washington City", "WA"),
-("Shakti", "Man", "0987654321", "1997-09-13", "Borivali", "Mumbai", "MH")
+("Shakti", "Man", "0987654321", "1997-09-13", "Borivali", "Mumbai", "MH"),
+("Leslie", "Thompson", "1485963217", "1995-02-05", "5677 Strong Street", "Omaha", "NB"),
+("William", "Patterson", "7851369452", "1998-10-24", "3827 Devon", "Northfield", "FL"),
+("George", "Vanauf" "4563987210", "1970-12-31", "2837 Greenway", "Grove", "AR"),
+("Walter", "White", "7521036950", "1965-05-04", "304 Negro Arroyo Lane", "Albequerque", "NM"),
+("Foon Yue", "Tseng", "9841023657", "2001-09-05", "382 Wildwood", "Sheldon" , "CO"),
+("Pamela", "Castillo", "7512024530", "1992-06-04", "838 Ridgeland", "Altonville", "KS");
 
 # Insert data in "vendors" table
 INSERT INTO vendors (
@@ -192,15 +198,27 @@ VALUES
 ("Ikea", "9876543210", "Kungers Kurva", "Stockholm", "SH"),
 ("Dove", "0123456789", "Sector-32", "Noida", "UP"),
 ("Nestle", "0987654321", "DLF Mall", "Gurugram", "HR"),
-("Levi's", "1234567890", "Sarojini Nagar", "New Delhi", "DL")
+("Levi's", "1234567890", "Sarojini Nagar", "New Delhi", "DL"),
+("Adidas", "5478963210", "Mahagun Mall", "Vaishali", "UP"),
+("Fortune", "7802364920", "D562 Rohini", "Delhi", "DL"),
+("Toys4Us", "4520369871", "9408 Furth Circle", "San Rafael", "CA"),
+("Men Shaving Company", "9812036547", "4097 Douglas Avenue", "Glendale", "UT"),
+("Archies", "8410230569", "3086 Ingle Lane", "Burbank", "WY"),
+("Kellogs", "8456302145", "934 Hillside Drive", "Brisbane", "TX");
 
 # Insert data in "shippers" table
-INSERT INTO shippers (name)
+INSERT INTO shippers (shipper_name)
 VALUES
 ("FedEx"),
 ("Blue Dart"),
 ("DTDC"),
-("DHL")
+("DHL"),
+("R K Logistics Pvt. Ltd."),
+("eKart"),
+("UPS"),
+("Cosco"),
+("Evergreen"),
+("Maersk");
 
 # Insert data in "products" table
 INSERT INTO products(
@@ -212,7 +230,13 @@ VALUES
 ("Soap", 30, 10, 2),
 ("Shoes", 25, 26.78, 4),
 ("Wooden table", 5, 150.36, 1),
-("Maggi", 50, 12.25, 3)
+("Maggi", 50, 12.25, 3),
+("Hoodie", 20, 110.45, 5),
+("Cooking Oil", 40, 20.69, 6),
+("NERF Toy Gun set", 18, 50.50, 7),
+("Shaving Kit", 22, 30.14, 8),
+("Birthday Card", 40, 11.79, 9),
+("Chocos Large Pack", 36, 18.99, 10);
 
 # Insert data in "carts" table one-by-one to ensure atomicity
 # Adding 1st product
@@ -267,6 +291,84 @@ UPDATE products
 SET quantity_in_stock=quantity_in_stock-5
 WHERE product_id=8;
 
+# Adding 5th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(8, 9, (SELECT p.name FROM products p WHERE p.product_id=9), 2, (SELECT p.unit_price FROM products p WHERE p.product_id=9));
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-2
+WHERE product_id=9;
+
+# Adding 6th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(3, 11, (SELECT p.name FROM products p WHERE p.product_id=11), 5, (SELECT p.unit_price FROM products p WHERE p.product_id=11));
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-5
+WHERE product_id=11;
+
+# Adding 7th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(9, 10, (SELECT p.name FROM products p WHERE p.product_id=10), 6, (SELECT p.unit_price FROM products p WHERE p.product_id=10));
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-6
+WHERE product_id=10;
+
+# Adding 8th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(2, 12, (SELECT p.name FROM products p WHERE p.product_id=12), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=12));
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-1
+WHERE product_id=12;
+
+# Adding 9th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(7, 13, (SELECT p.name FROM products p WHERE p.product_id=13), 10, (SELECT p.unit_price FROM products p WHERE p.product_id=13));
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-10
+WHERE product_id=13;
+
+# Adding 10th product
+INSERT INTO carts (
+	customer_id,
+    product_id,
+    product_name,
+    quantity,
+    unit_price)
+VALUES
+(8, 12, (SELECT p.name FROM products p WHERE p.product_id=12), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=12));
+UPDATE products
+SET quantity_in_stock=quantity_in_stock-1
+WHERE product_id=12;
+
 # Insert data in "orders" table one-by-one to ensure atomicity
 # Adding 1st order
 INSERT INTO orders (
@@ -304,7 +406,63 @@ INSERT INTO orders (
 VALUES
 (4, 4, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=4), "UPI");
 
+# Adding 5th order
+INSERT INTO orders (
+	customer_id,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(8, 5, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=8), "Cash");
+
+# Adding 6th order
+INSERT INTO orders (
+	customer_id,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(3, 9, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=3), "UPI");
+
+# Adding 7th order
+INSERT INTO orders (
+	customer_id,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(9, 3, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=9), "Card");
+
+# Adding 8th order
+INSERT INTO orders (
+	customer_id,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(2, 6, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=2), "Cash");
+
+# Adding 9th order
+INSERT INTO orders (
+	customer_id,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(7, 10, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=7), "UPI");
+
+# Adding 10th order
+INSERT INTO orders (
+	customer_id,
+    shipper_id,
+    amount,
+    payment_method)
+VALUES
+(8, 8, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id=8), "UPI");
+
 # Insert data in "order_items" table
+SELECT EXISTS (SELECT 1 FROM order_items);
+TRUNCATE TABLE order_items;
 INSERT INTO order_items (order_id, product_id, quantity, total_price_per_product)
 SELECT o.order_id, c.product_id, c.quantity, c.total_price_per_product
 FROM orders o
@@ -327,3 +485,5 @@ VALUES (3, 4, "Not that great", 3.8);
 # Adding 4th review
 INSERT INTO reviews (customer_id, product_id, comments, rating)
 VALUES (4, 8, "Phenomenal", 5.0);
+
+# Adding 5th review
