@@ -1,0 +1,32 @@
+#1 Find all customers who were born before 1980-01-01.(Selection)
+SELECT * FROM customers
+WHERE birth_date < "1980-01-01";
+
+#2 Find all the passwords that will grant you access to the database i.e. admin passwords. (Projection)
+SELECT password FROM admins;
+
+#3 Find all the vendors who have added their products. (Theta-Join)
+SELECT v.vendor_id, v.name, p.name, p.quantity_in_stock, p.unit_price from vendors v
+JOIN products p
+WHERE v.vendor_id=p.vendor_id;
+
+#4 Find all the products that any customer can buy. (Product)
+SELECT c.first_name, c.last_name, p.name
+FROM customers c
+CROSS JOIN products p;
+
+#5 Find all the shippers who will ship an order to a customer. (Natural-Join)
+SELECT s.shipper_name, o.order_id, o.customer_id
+FROM shippers s
+NATURAL JOIN orders o;
+
+#6 Find all the customers who placed an order
+SELECT c.customer_id, c.first_name, c.last_name, o.order_id
+FROM customers c
+NATURAL JOIN orders o;
+
+#7 Sort all the customers by highest points and total amount spent. (Duplicate Elimination, Sorting)
+SELECT DISTINCT c.customer_id, c.first_name, c.last_name, c.points, o.amount
+FROM customers c
+NATURAL JOIN orders o
+ORDER BY c.points DESC, o.amount DESC;
