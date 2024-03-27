@@ -31,7 +31,7 @@ FROM customers c
 NATURAL JOIN orders o
 ORDER BY c.points DESC, o.amount DESC;
 
-#8 Ship all the orders today. (Updation)
+#8 Ship all the orders today. (Updation)(Requires disabling of Safe-Updates)
 UPDATE orders
 SET shipped_date=CURDATE();
 
@@ -93,8 +93,14 @@ CREATE TABLE `store`.`customers` (
   `city` VARCHAR(45) NOT NULL,
   `state` CHAR(2) NOT NULL,
   `points` INT NULL DEFAULT 0,
-  PRIMARY KEY (`customer_id`, `phone`)
-);
+  PRIMARY KEY (`customer_id`, `phone`))
+DELIMITER $$
+CREATE DEFINER = CURRENT_USER TRIGGER `store`.`customers_AFTER_DELETE` AFTER DELETE ON `customers` FOR EACH ROW
+BEGIN
+	DELETE FROM carts
+    WHERE customer_id=OLD.customer_id;
+END
+DELIMITER;
 
 # Make table "vendors"
 CREATE TABLE `store`.`vendors` (
@@ -133,7 +139,7 @@ CREATE TABLE `store`.`products` (
 CREATE TABLE `store`.`carts` (
   `customer_id` INT NOT NULL,
   `product_id` INT NOT NULL,
-  `product_name` VARCHAR(45) NOT NULL ;
+  `product_name` VARCHAR(45) NOT NULL,
   `quantity` INT NULL DEFAULT 1,
   `unit_price` DECIMAL(10,2) NOT NULL,
   `total_price_per_product` DECIMAL(10,2) GENERATED ALWAYS AS (quantity*unit_price) VIRTUAL,
@@ -254,7 +260,7 @@ VALUES
 ("Shakti", "Man", "0987654321", "1997-09-13", "Borivali", "Mumbai", "MH"),
 ("Leslie", "Thompson", "1485963217", "1995-02-05", "5677 Strong Street", "Omaha", "NB"),
 ("William", "Patterson", "7851369452", "1998-10-24", "3827 Devon", "Northfield", "FL"),
-("George", "Vanauf" "4563987210", "1970-12-31", "2837 Greenway", "Grove", "AR"),
+("George", "Vanauf", "4563987210", "1970-12-31", "2837 Greenway", "Grove", "AR"),
 ("Walter", "White", "7521036950", "1965-05-04", "304 Negro Arroyo Lane", "Albequerque", "NM"),
 ("Foon Yue", "Tseng", "9841023657", "2001-09-05", "382 Wildwood", "Sheldon" , "CO"),
 ("Pamela", "Castillo", "7512024530", "1992-06-04", "838 Ridgeland", "Altonville", "KS");
@@ -385,10 +391,10 @@ INSERT INTO carts (
     quantity,
     unit_price)
 VALUES
-(3, 11, (SELECT p.name FROM products p WHERE p.product_id=11), 5, (SELECT p.unit_price FROM products p WHERE p.product_id=11));
+(3, 4, (SELECT p.name FROM products p WHERE p.product_id=4), 5, (SELECT p.unit_price FROM products p WHERE p.product_id=4));
 UPDATE products
 SET quantity_in_stock=quantity_in_stock-5
-WHERE product_id=11;
+WHERE product_id=4;
 
 # Adding 7th product
 INSERT INTO carts (
@@ -411,10 +417,10 @@ INSERT INTO carts (
     quantity,
     unit_price)
 VALUES
-(2, 12, (SELECT p.name FROM products p WHERE p.product_id=12), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=12));
+(2, 8, (SELECT p.name FROM products p WHERE p.product_id=8), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=8));
 UPDATE products
 SET quantity_in_stock=quantity_in_stock-1
-WHERE product_id=12;
+WHERE product_id=8;
 
 # Adding 9th product
 INSERT INTO carts (
@@ -424,10 +430,10 @@ INSERT INTO carts (
     quantity,
     unit_price)
 VALUES
-(7, 13, (SELECT p.name FROM products p WHERE p.product_id=13), 10, (SELECT p.unit_price FROM products p WHERE p.product_id=13));
+(7, 1, (SELECT p.name FROM products p WHERE p.product_id=1), 10, (SELECT p.unit_price FROM products p WHERE p.product_id=1));
 UPDATE products
 SET quantity_in_stock=quantity_in_stock-10
-WHERE product_id=13;
+WHERE product_id=1;
 
 # Adding 10th product
 INSERT INTO carts (
@@ -437,10 +443,10 @@ INSERT INTO carts (
     quantity,
     unit_price)
 VALUES
-(8, 12, (SELECT p.name FROM products p WHERE p.product_id=12), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=12));
+(8, 8, (SELECT p.name FROM products p WHERE p.product_id=8), 1, (SELECT p.unit_price FROM products p WHERE p.product_id=8));
 UPDATE products
 SET quantity_in_stock=quantity_in_stock-1
-WHERE product_id=12;
+WHERE product_id=8;
 
 # Insert data in "orders" table one-by-one to ensure atomicity
 # Adding 1st order
@@ -569,16 +575,16 @@ VALUES (9, 10, "Tasty food", 4.6);
 
 # Adding 7th review
 INSERT INTO reviews (customer_id, product_id, comments, rating)
-VALUES (7, 13, "Happy Birthday!!", 4.9);
+VALUES (1, 5, "Very cool", 4.9);
 
 # Adding 8th review
 INSERT INTO reviews (customer_id, product_id, comments, rating)
-VALUES (3, 11, NULL, 3.7);
+VALUES (7, 1, NULL, 3.7);
 
 # Adding 9th review
 INSERT INTO reviews (customer_id, product_id, comments, rating)
-VALUES (8, 12, "Makes you completely clean", 5.0);
+VALUES (2, 8, "Makes you completely clean", 5.0);
 
 # Adding 10th review
 INSERT INTO reviews (customer_id, product_id, comments, rating)
-VALUES (2, 12, NULL, 3.2);
+VALUES (3, 7, NULL, 3.2);

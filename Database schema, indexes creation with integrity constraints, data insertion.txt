@@ -20,8 +20,14 @@ CREATE TABLE `store`.`customers` (
   `city` VARCHAR(45) NOT NULL,
   `state` CHAR(2) NOT NULL,
   `points` INT NULL DEFAULT 0,
-  PRIMARY KEY (`customer_id`, `phone`)
-);
+  PRIMARY KEY (`customer_id`, `phone`))
+DELIMITER $$
+CREATE DEFINER = CURRENT_USER TRIGGER `store`.`customers_AFTER_DELETE` AFTER DELETE ON `customers` FOR EACH ROW
+BEGIN
+	DELETE FROM carts
+    WHERE customer_id=OLD.customer_id;
+END
+DELIMITER;
 
 # Make table "vendors"
 CREATE TABLE `store`.`vendors` (
