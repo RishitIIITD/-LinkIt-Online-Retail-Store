@@ -154,7 +154,16 @@ CREATE TABLE `store`.`carts` (
     FOREIGN KEY (`product_id`)
     REFERENCES `store`.`products` (`product_id`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION);
+    ON UPDATE NO ACTION)
+DELIMITER $$
+USE `store`$$
+CREATE DEFINER = CURRENT_USER TRIGGER `store`.`carts_AFTER_DELETE` AFTER DELETE ON `carts` FOR EACH ROW
+BEGIN
+	UPDATE products
+    SET quantity_in_stock=quantity_in_stock+OLD.quantity
+    WHERE products.product_id=OLD.product_id;
+END$$
+DELIMITER ;
 
 # Make table "orders"
 CREATE TABLE `store`.`orders` (
