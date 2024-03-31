@@ -1,0 +1,103 @@
+# Embedded SQL queries
+#1
+SELECT * FROM customers;
+
+#2
+SELECT password FROM admins;
+
+#3
+# {first_name}, {last_name}, {phone}, {birth_year}, {birth_month}, {birth_day}, {address}, {city}, {state}
+# These are all user inputs
+INSERT INTO customers (first_name, last_name, phone, birth_date, address, city, state)
+VALUES ('{first_name}', '{last_name}', '{phone}', '{birth_year}-{birth_month}-{birth_day}', '{address}', '{city}', '{state}');"
+
+#4
+SELECT customer_id FROM customers WHERE customer_id=LAST_INSERT_ID();
+
+#5
+# {delete_id} is a user input
+DELETE FROM customers WHERE customer_id={delete_id}
+
+#6
+# {prod_name}, {prod_quant}, {prod_price}, {vendor_id}
+# These are all user inputs
+INSERT INTO products (name, quantity_in_stock, unit_price, vendor_id) VALUES ('{prod_name}', {prod_quant}, {prod_price}, {vendor_id});
+
+#7
+# {vendor_id}, {remove_prod} are user inputs
+DELETE FROM products WHERE vendor_id={vendor_id} AND product_id={remove_prod}
+
+#8
+# {id}, {prod}, {quant}
+# These are all user inputs
+INSERT INTO carts (customer_id, product_id, product_name, quantity, unit_price)
+VALUES ({id}, {prod}, (SELECT p.name FROM products p WHERE p.product_id={prod}), {quant}, (SELECT p.unit_price FROM products p WHERE p.product_id={prod}));
+UPDATE products SET quantity_in_stock=quantity_in_stock-{quant} WHERE product_id={prod};
+
+#9
+# {id} is a user input
+# {random_shipper}, {payment_methods[pay_method]} are stored in the application
+INSERT INTO orders (customer_id, shipper_id, amount, payment_method)
+VALUES({id}, {random_shipper}, (SELECT SUM(c.total_price_per_product) FROM carts c WHERE c.customer_id={id}), '{payment_methods[pay_method]}');
+
+#10
+SELECT EXISTS (SELECT 1 FROM order_items);
+TRUNCATE TABLE order_items;
+INSERT INTO order_items (order_id, product_id, quantity, total_price_per_product)
+SELECT o.order_id, c.product_id, c.quantity, c.total_price_per_product FROM orders o JOIN carts c WHERE o.customer_id=c.customer_id;
+
+#11
+# {id}, {removed_item}
+# These are user inputs
+DELETE FROM carts WHERE customer_id={id} AND product_id={removed_item};
+
+#12
+# {new_quant}, {id}, {changed_item} are user inputs
+# max_quant[0] and old_quant[0] are stored in the application
+UPDATE carts SET quantity={new_quant} WHERE customer_id={id} AND product_id={changed_item};
+UPDATE products SET quantity_in_stock={max_quant[0]-(new_quant-old_quant[0])} WHERE product_id={changed_item};
+UPDATE products SET quantity_in_stock={max_quant[0]+(old_quant[0]-new_quant)} WHERE product_id={changed_item};
+
+#13
+# {id}, {review_item}, {comment}, {new_rating}
+# These are user inputs
+INSERT INTO reviews (customer_id, product_id, comments, rating) VALUES ({id}, {review_item}, '{comment}', {new_rating});
+
+# Triggers
+#1 In the "customers" table,
+CREATE DEFINER=`root`@`localhost` TRIGGER `customers_AFTER_DELETE` AFTER DELETE ON `customers` FOR EACH ROW BEGIN
+	DELETE FROM carts
+    WHERE customer_id=OLD.customer_id;
+END
+
+If a customer has added an item to the cart, it will be created as a row in the carts table.
+When that customer is deleted, the entire cart is also deleted
+
+#2 In the "carts" table
+CREATE DEFINER=`root`@`localhost` TRIGGER `carts_AFTER_DELETE` AFTER DELETE ON `carts` FOR EACH ROW BEGIN
+	UPDATE products
+    SET quantity_in_stock=quantity_in_stock+OLD.quantity
+    WHERE products.product_id=OLD.product_id;
+END
+
+Whenever an item is removed from the cart of a customer, that row is deleted.
+The quantity in that row is restored back to the products table which is the storage of the retail store.
+
+#3 In the "orders" table
+CREATE DEFINER=`root`@`localhost` TRIGGER `orders_AFTER_INSERT` AFTER INSERT ON `orders` FOR EACH ROW BEGIN
+	UPDATE `store`.`customers`
+    SET points = points + 100
+    WHERE customer_id = NEW.customer_id;
+END
+
+Whenever a customer places an order, the points of the customer are incremented by 100
+
+#4 In the "reviews" table
+CREATE DEFINER=`root`@`localhost` TRIGGER `reviews_AFTER_INSERT` AFTER INSERT ON `reviews` FOR EACH ROW BEGIN
+	UPDATE products
+    SET rating=(rating+new.rating)/2
+    WHERE product_id=new.product_id;
+END
+
+Whenever a customer leaves a review for a product they placed an order for, the rating of the product is updated in the storage.
+It becomes the average of the old and the new rating.
