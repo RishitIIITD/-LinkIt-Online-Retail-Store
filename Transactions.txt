@@ -1,0 +1,58 @@
+Non-conflicting transactions(Those transactions that do not change/modify the data object they access. They simply read the data object)
+
+Schedule 1: Read the points of customer ID = 5
+
+Transaction 1:
+
+START TRANSACTION;
+SELECT points FROM customers
+WHERE customer_id=5;
+COMMIT;
+
+Transaction 2:
+
+START TRANSACTION;
+SELECT points FROM customers
+WHERE customer_id=5;
+COMMIT;
+
+Schedule 2: Read the unit price of Maggi
+
+Transaction 3:
+
+START TRANSACTION;
+SELECT unit_price
+FROM products
+WHERE product_id=4;
+COMMIT;
+
+Transaction 4:
+
+START TRANSACTION;
+SELECT unit_price
+FROM products
+WHERE product_id=4;
+COMMIT;
+
+Conflicting transactions(Those transactions that change the data object they access. Eg, Write-Read(WR), Read-Write(RW), (Write-Write))
+
+Schedule 3: Write the points of customer ID = 5, but do not commit. In another transaction, read the points of the customer
+
+Transaction 1:
+
+// Initially, the points of the customer = 0
+START TRANSACTION;
+UPDATE customers
+SET points=100
+WHERE customer_id=5;
+// No COMMIT
+
+Transaction 2:
+
+START TRANSACTION;
+SELECT points FROM customers
+WHERE customer_id=5;
+COMMIT;
+
+// The other transaction will still show the points to be 0, because the first transaction has not committed yet.
+// This is a conflict
