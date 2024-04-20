@@ -38,7 +38,7 @@ Conflicting transactions(Those transactions that change the data object they acc
 
 Schedule 3: Write the points of customer ID = 5, but do not commit. In another transaction, read the points of the customer
 
-Transaction 1:
+Transaction 5:
 
 // Initially, the points of the customer = 0
 START TRANSACTION;
@@ -47,12 +47,12 @@ SET points=100
 WHERE customer_id=5;
 // No COMMIT
 
-Transaction 2:
+Transaction 6:
 
 START TRANSACTION;
 SELECT points FROM customers
 WHERE customer_id=5;
 COMMIT;
 
-// The other transaction will still show the points to be 0, because the first transaction has not committed yet.
+// Transaction 6 will still show the points to be 0, because the first transaction has not committed yet.
 // This is a conflict
